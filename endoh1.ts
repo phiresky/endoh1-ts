@@ -1,136 +1,146 @@
-var G = 1;
-var P = 4;
-var V = 4;
+"use strict";
 
-var w=80,h=25;
+var Gravity = 1;
+var Pressure = 4;
+var Viscosity = 4;
+
+var w = 79, h = 25, scale = 1;
 
 type double = number;
 type int = number;
 
-class complex {
-	constructor(public x:double = 0, public y:double = 0) {}
-
-	minus(p:complex) {
-		return new complex(this.x-p.x,this.y-p.y);
-	}
-	abs() {
-		return Math.sqrt(this.x*this.x+this.y*this.y);
-	}
-	clone() {
-		return new complex(this.x,this.y);
-	}
-};
-
 class particle {
-	constructor(public pos:complex, public wallflag:boolean) {}
-	vel:complex = new complex(); force:complex = new complex();
-	density:double = 0;
+	constructor(public posx: double, public posy: double, public wallflag: boolean) { }
+	velx: double = 0; vely: double = 0;
+	forcex: double = 0; forcey: double = 0;
+	density: double = 0;
 };
 
+var a: particle[] = [];
 
-var a:particle[] = [];
-var d = new Uint8Array(w*h);
-var EOF = -1;
-var interval;
-var frameid = 0;
+declare var canvas: HTMLCanvasElement, previewarea: HTMLTextAreaElement, 
+	file: HTMLSelectElement, fps: HTMLSpanElement;
+canvas.width = w * scale; canvas.height = h * scale;
+var ctx = <CanvasRenderingContext2D>canvas.getContext('2d');
+ctx.fillStyle = "rgba(0,0,0,0.7)";
 
+var interval, frameid = 0, lastdate, lastframe;
+previewarea.cols = w;
+previewarea.rows = h;
 
-var input:string = document.getElementById("input").textContent, inputpos = 0;
-function getchar() {
-	if(inputpos >= input.length) return EOF;
-	return input.charCodeAt(inputpos++);
-}
-
-function ord(c:string) {
+function ord(c: string) {
 	return c.charCodeAt(0);
 }
-function chr(c:int) {
+function chr(c: int) {
 	return String.fromCharCode(c);
 }
 
+var input = "";
+
+function loadfile() {
+	var req = new XMLHttpRequest();
+	req.open('GET', file.value, true);
+	req.onload = function() {
+		if (this.status >= 200 && this.status < 400)
+			previewarea.textContent = input = this.response;
+		else console.error(this);
+	}
+	req.send();
+}
+
 function init() {
-	var c:int;
-	var x:double = 0, y:double = 0;
-	while ((c = getchar()) != EOF) {
-		if (c > 10) {
-			if (32 < c) {
-				a.push(new particle(new complex(x,y), c == ord('#')));
-				a.push(new particle(new complex(x+1,y), c == ord('#')));
-			}
-			y--;
+	a = [];
+	var y: double = 0, x: double = 0;
+	for (var i = 0; i < input.length; i++) {
+		let c = input.charCodeAt(i);
+		if (c === ord('\n')) {
+			y += 2;
+			x = 0;
+		} else if (c !== ord(' ')) {
+			a.push(new particle(x, y, c === ord('#')));
+			a.push(new particle(x, y + 1, c === ord('#')));
+			x++;
 		} else {
-			x += 2;
-			y = 0;
+			x++;
 		}
 	}
 }
 
-function fputs(data:string) {
-	console.log(data);
-}
-
-function int(d:double) {
+function int(d: double) {
 	return ~~d;
 }
 
-function nextframe() {
-	if(frameid == 30) clearInterval(interval);
-	frameid++;
+function calcfps() {
+	if (frameid % 30 === 0) {
+		var f = (frameid - lastframe) * 1000 / (Date.now() - lastdate);
+		fps.textContent = `${f.toFixed(1) } fps`;
+		lastdate = Date.now();
+		lastframe = frameid;
+	}
+}
+
+function density() {
 	for (let p of a) {
 		p.density = p.wallflag ? 9 : 0;
 		for (let q of a) {
-			let w = p.pos.minus(q.pos).abs() / 2 - 1;
-			if (0 < int(1 - w))
+			let dx = p.posx - q.posx, dy = p.posy - q.posy;
+			let d2 = dx * dx + dy * dy;
+			if (d2 < 4) {
+				let w = Math.sqrt(d2) / 2 - 1;
 				p.density += w * w;
-		}
-	}
-	for (let p of a) {
-		p.force = new complex(G);
-		for (let q of a) {
-			let d = p.pos.minus(q.pos);
-			let w = d.abs() / 2 - 1;
-			if (int(1-w) > 0) {
-				p.force.x +=
-					(d.x * (3 - p.density - q.density) * P
-					 + p.vel.x * V - q.vel.x * V
-					 ) * w / p.density;
-				p.force.y +=
-					(d.y * (3 - p.density - q.density) * P
-					 + p.vel.y * V - q.vel.y * V
-					 ) * w / p.density;
 			}
 		}
 	}
-	for (let x = 0; x<w*h; x++)
-		d[x] = 0;
-	for (let p of a) {
-		let x = int(-p.pos.y);
-		let y = int(p.pos.x / 2);
-		let t = int(x + w * y);
-		if(!p.wallflag) {
-			p.pos.x += p.vel.x += p.force.x / 10;
-			p.pos.y += p.vel.y += p.force.y / 10;
-		}
-		if (0 <= x && x < w-1 && 0 <= y && y < h-2) {
-			// on screen
-			d[t] |= 8;
-			d[t + 1] |= 4;
-			t += w;
-			d[t] |= 2;
-			d[t + 1] = 1;
-		}
-	}
-	var o = "";
-	for (var x = 0; x<w*h; x++) {
-		if((x+1) % w)
-			o += " '`-.|//,\\|\\_\\/#"[d[x]];
-		else o += '\n';
-	}
-	return o;
 }
 
-function main() {
-	init();
-	interval = setInterval("output.textContent = nextframe();", 12.321);
-	return 0;
+function force() {
+	for (let p of a) {
+		p.forcey = Gravity;
+		p.forcex = 0;
+		for (let q of a) {
+			let dy = p.posy - q.posy, dx = p.posx - q.posx;
+
+			let d2 = dy * dy + dx * dx;
+			if (d2 < 4) {
+				let w = Math.sqrt(d2) / 2 - 1;
+				p.forcey += (dy * (3 - p.density - q.density) * Pressure + p.vely * Viscosity - q.vely * Viscosity) * w / p.density;
+				p.forcex += (dx * (3 - p.density - q.density) * Pressure + p.velx * Viscosity - q.velx * Viscosity) * w / p.density;
+			}
+		}
+	}
 }
+
+function draw() {
+	ctx.clearRect(0, 0, w * scale, h * scale);
+	for (let p of a) {
+		let x = p.posx, y = p.posy / 2;
+		if (!p.wallflag) {
+			p.posy += p.vely += p.forcey / 10;
+			p.posx += p.velx += p.forcex / 10;
+		}
+		if (0 <= x && x < w && 0 <= y && y < h) {
+			ctx.fillRect(x * scale, y * scale, scale, scale / 2);
+		}
+	}
+}
+
+function nextframe() {
+	frameid++;
+	calcfps();
+	density();
+	force();
+	draw();
+}
+
+function run() {
+	stop();
+	lastdate = Date.now(); lastframe = frameid = 0;
+	init();
+	interval = setInterval(nextframe, 1000 / 60);
+}
+
+function stop() {
+	clearInterval(interval);
+}
+
+loadfile();
