@@ -1,7 +1,8 @@
-#include <stdio.h>//  .IOCCC                                         Fluid-  #
-#include <unistd.h>  //2012                                         _Sim!_  #
+#include <stdio.h>
+#include <unistd.h>
 #include <cmath>
 #include <vector>
+#include <iostream>
 using namespace std;
 #define G 1
 #define P 4
@@ -37,19 +38,22 @@ struct complex {
 	}
 };
 
+ostream& operator <<(ostream& o, complex& c) {
+	return o<<'('<<c.x<<','<<c.y<<')';
+}
 struct particle {
 	particle(complex pos, bool wallflag):pos(pos),wallflag(wallflag) {}
 	complex pos,vel,force;
 	bool wallflag;
-	double density;
+	double density = 0;
 };
 
-complex operator -(double p, complex q) {
-	return complex{p,0} - q;
-}
 
 vector<particle> a;
-char b[6856] = "\x1b[2J\x1b[1;1H"; // clear screen, go to pos 1,1
+#define CLEARSCREEN "\x1b[2J"
+#define RESETPOS "\x1b[1;1H"
+char d[6856];
+
 
 void init() {
 	int x;
@@ -67,11 +71,19 @@ void init() {
 		}
 	}
 }
+void debuglog() {
+	for(particle& p:a) {
+		cout << p.pos << p.vel << p.force << p.wallflag << p.density << endl;
+	}
+}
 
 int main() {
+	cout.precision(3);
+	cout << std::fixed;
 	init();
-	puts(b);
-	while(true) {
+	fputs(CLEARSCREEN, stdout);
+	int frameid = 0;
+	while(++frameid) {
 		for (particle& p : a) {
 			p.density = p.wallflag * 9;
 			for (particle& q : a) {
@@ -80,6 +92,7 @@ int main() {
 					p.density += w * w;
 			}
 		}
+		
 		for (particle& p : a) {
 			p.force = G;
 			for (particle& q : a) {
@@ -92,30 +105,31 @@ int main() {
 						 ) * w / p.density;
 			}
 		}
-		for (int x = 0; x<=w*h; x++)
-			b[x + 10] = 0;
+		for (int x = 0; x<w*h; x++)
+			d[x] = 0;
 		for (particle& p : a) {
 			int x = -p.pos.y;
 			int y = p.pos.x / 2;
-			int t = 10 + x + 80 * y;
-			p.pos += p.vel += p.force / 10 * !p.wallflag;
-			if (0 <= x && x < 79 && 0 <= y && y < 23) {
+			int t = x + w * y;
+			if(!p.wallflag)
+				p.pos += p.vel += p.force / 10;
+			if (0 <= x && x < w-1 && 0 <= y && y < h-2) {
 				// on screen
-				b[t] |= 8;
-				b[t + 1] |= 4;
-				t += 80;
-				b[t + 1] = 1;
-				b[t] |= 2;
+				d[t] |= 8;
+				d[t + 1] |= 4;
+				t += w;
+				d[t + 1] = 1;
+				d[t] |= 2;
 			}
 		}
-		for (int x = 10; x<2011; x++) {
-			if(x % 80 - 9)
-				b[x] = " '`-.|//,\\|\\_\\/#\n"[int(b[x])];
-			else b[x] = '\n';
+		for (int x = 0; x<w*h; x++) {
+			if((x+1) % w)
+				d[x] = " '`-.|//,\\|\\_\\/#\n"[int(d[x])];
+			else d[x] = '\n';
 		}
-
 		usleep(12321);
-		puts(b + 4);
+		fputs(RESETPOS, stdout);
+		fputs(d, stdout);
 	}
 	return 0;
 }
