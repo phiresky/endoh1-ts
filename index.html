@@ -1,14 +1,19 @@
 <!doctype html>
 <meta charset="utf-8">
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
    canvas {
-      width: 673px;
-      height: 400px;
+      position:absolute;
+      top:0;left:0;
+      width:100%; height:100%;
       image-rendering: pixelated;
       image-rendering: -moz-crisp-edges;
       border: 1px solid gray;
    }
+   .box {position:relative; width:100%;}
+   .box:before {content:""; display:block; padding-top:63%;}
+
    textarea {
       resize: none;
       font-family:monospace;
@@ -21,7 +26,7 @@
       <button onclick="stop()">Stop</button>
       <span id="fps"></span>
    </div>
-   <canvas id="canvas"></canvas>
+   <div class="box"><canvas id="canvas"></canvas></div>
    
    <script>
    ["clock.txt","endoh1.c","column2.txt","column3.txt","column.txt","corners.txt",
