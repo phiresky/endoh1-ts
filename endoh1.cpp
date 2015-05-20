@@ -83,7 +83,8 @@ int main() {
 	init();
 	fputs(CLEARSCREEN, stdout);
 	int frameid = 0;
-	while(++frameid) {
+	while(true) {
+		++frameid;
 		for (particle& p : a) {
 			p.density = p.wallflag * 9;
 			for (particle& q : a) {
