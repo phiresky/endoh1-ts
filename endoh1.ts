@@ -1,4 +1,5 @@
 "use strict";
+// compiled from endoh1.ts
 
 var Gravity = 1;
 var Pressure = 4;
