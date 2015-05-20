@@ -8,7 +8,7 @@ using namespace std;
 
 struct complex {
 	complex() :x(0),y(0) {}
-	complex(double real) :x(real),y(0) {}
+	complex(double x) :x(x),y(0) {}
 	complex(double x,double y) :x(x),y(y) {}
 
 	complex operator +(complex p) {
@@ -33,14 +33,17 @@ struct complex {
 	double abs() {
 		return sqrt(x*x+y*y);
 	}
+};
 
+struct particle {
+	complex pos,wallflag,density,force,vel;
 };
 
 complex operator -(double p, complex q) {
-	return complex{p} - q;
+	return complex{p,0} - q;
 }
 
-complex a[97687];
+particle a[19538];
 char b[6856] = "\x1b[2J\x1b[1;1H"; // clear screen, go to pos 1,1
 
 int init() {
@@ -49,10 +52,10 @@ int init() {
 	while ((x = getchar()) != EOF) {
 		if (x > 10) {
 			if (32 < x) {
-				a[r++] = w;
-				a[r + 4] = w + 1;
-				a[r] = a[r + 5] = x == '#';
-				r += 9;
+				a[r].pos = w;
+				a[r].wallflag = a[r+1].wallflag = {double(x == '#'),0};
+				a[r+1].pos = {w.x + 1, w.y};
+				r += 2;
 			}
 			w.y--;
 		} else {
@@ -67,31 +70,31 @@ int main() {
 	int r = init();
 	puts(b);
 	while(true) {
-		for (int p = 0; p < r; p += 5) {
-			a[p + 2] = a[p + 1] * 9;
-			for (int q = 0; q < r; q += 5) {
-				double w = (a[p] - a[q]).abs() / 2 - 1;
+		for (int p = 0; p < r; p++) {
+			a[p].density = a[p].wallflag * 9;
+			for (int q = 0; q < r; q++) {
+				double w = (a[p].pos - a[q].pos).abs() / 2 - 1;
 				if (0 < int(1 - w))
-					a[p + 2] += w * w;
+					a[p].density += w * w;
 			}
 		}
-		for (int p = 0; p < r; p += 5) {
-			a[p + 3] = G;
-			for (int q = 0; q < r; q += 5) {
-				complex d = a[p] - a[q];
+		for (int p = 0; p < r; p++) {
+			a[p].force = G;
+			for (int q = 0; q < r; q++) {
+				complex d = a[p].pos - a[q].pos;
 				double w = d.abs() / 2 - 1;
 				if (int(1-w) > 0)
-					a[p + 3] += (d * (3 - a[p + 2] - a[q + 2]) * P + a[p + 4] * V
-									- a[q + 4] * V)*w/ a[p + 2];
+					a[p].force +=
+						(d * (3 - a[p].density - a[q].density) * P + a[p].vel * V - a[q].vel * V) * w/ a[p].density;
 			}
 		}
 		for (int x = 10; x<2011; x++)
 			b[x] = 0;
-		for (int p = 0; p < r; p += 5) {
-			int x = -a[p].y;
-			int y = a[p].x / 2;
+		for (int p = 0; p < r; p++) {
+			int x = -a[p].pos.y;
+			int y = a[p].pos.x / 2;
 			int t = 10 + x + 80 * y;
-			a[p] += a[p + 4] += a[p + 3] / 10 * !(a[p + 1]).x;
+			a[p].pos += a[p].vel += a[p].force / 10 * !(a[p].wallflag).x;
 			if (0 <= x && x < 79 && 0 <= y && y < 23) {
 				// on screen
 				b[t] |= 8;
