@@ -1,10 +1,13 @@
 #include <stdio.h>//  .IOCCC                                         Fluid-  #
 #include <unistd.h>  //2012                                         _Sim!_  #
 #include <cmath>
+#include <vector>
 using namespace std;
 #define G 1
 #define P 4
 #define V 4
+
+int w=80,h=25;
 
 struct complex {
 	complex() :x(0),y(0) {}
@@ -20,9 +23,8 @@ struct complex {
 	complex operator *(complex p) {
 		return {x*p.x-y*p.y, x*p.y+y*p.x};
 	}
-	complex operator /(complex p) {
-		double den = p.x*p.x+p.y*p.y;
-		return {(x*p.x+y*p.y)/den,(y*p.x-x*p.y)/den};
+	complex operator /(double p) {
+		return {x/p,y/p};
 	}
 	complex& operator +=(complex p) {
 		x += p.x;
@@ -36,26 +38,27 @@ struct complex {
 };
 
 struct particle {
-	complex pos,wallflag,density,force,vel;
+	particle(complex pos, bool wallflag):pos(pos),wallflag(wallflag) {}
+	complex pos,vel,force;
+	bool wallflag;
+	double density;
 };
 
 complex operator -(double p, complex q) {
 	return complex{p,0} - q;
 }
 
-particle a[19538];
+vector<particle> a;
 char b[6856] = "\x1b[2J\x1b[1;1H"; // clear screen, go to pos 1,1
 
-int init() {
-	int x,r = 0;
+void init() {
+	int x;
 	complex w;
 	while ((x = getchar()) != EOF) {
 		if (x > 10) {
 			if (32 < x) {
-				a[r].pos = w;
-				a[r].wallflag = a[r+1].wallflag = {double(x == '#'),0};
-				a[r+1].pos = {w.x + 1, w.y};
-				r += 2;
+				a.push_back(particle(w, x == '#'));
+				a.push_back(particle(w + 1, x == '#'));
 			}
 			w.y--;
 		} else {
@@ -63,38 +66,39 @@ int init() {
 			w.y = 0;
 		}
 	}
-	return r;
 }
 
 int main() {
-	int r = init();
+	init();
 	puts(b);
 	while(true) {
-		for (int p = 0; p < r; p++) {
-			a[p].density = a[p].wallflag * 9;
-			for (int q = 0; q < r; q++) {
-				double w = (a[p].pos - a[q].pos).abs() / 2 - 1;
+		for (particle& p : a) {
+			p.density = p.wallflag * 9;
+			for (particle& q : a) {
+				double w = (p.pos - q.pos).abs() / 2 - 1;
 				if (0 < int(1 - w))
-					a[p].density += w * w;
+					p.density += w * w;
 			}
 		}
-		for (int p = 0; p < r; p++) {
-			a[p].force = G;
-			for (int q = 0; q < r; q++) {
-				complex d = a[p].pos - a[q].pos;
+		for (particle& p : a) {
+			p.force = G;
+			for (particle& q : a) {
+				complex d = p.pos - q.pos;
 				double w = d.abs() / 2 - 1;
 				if (int(1-w) > 0)
-					a[p].force +=
-						(d * (3 - a[p].density - a[q].density) * P + a[p].vel * V - a[q].vel * V) * w/ a[p].density;
+					p.force +=
+						(d * (3 - p.density - q.density) * P
+						 + p.vel * V - q.vel * V
+						 ) * w / p.density;
 			}
 		}
-		for (int x = 10; x<2011; x++)
-			b[x] = 0;
-		for (int p = 0; p < r; p++) {
-			int x = -a[p].pos.y;
-			int y = a[p].pos.x / 2;
+		for (int x = 0; x<=w*h; x++)
+			b[x + 10] = 0;
+		for (particle& p : a) {
+			int x = -p.pos.y;
+			int y = p.pos.x / 2;
 			int t = 10 + x + 80 * y;
-			a[p].pos += a[p].vel += a[p].force / 10 * !(a[p].wallflag).x;
+			p.pos += p.vel += p.force / 10 * !p.wallflag;
 			if (0 <= x && x < 79 && 0 <= y && y < 23) {
 				// on screen
 				b[t] |= 8;
