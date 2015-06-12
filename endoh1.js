@@ -1,9 +1,11 @@
 "use strict";
 // compiled from endoh1.ts
+// https://github.com/phiresky/endoh1-ts
+var accuracy = 2;
 var Gravity = 1;
 var Pressure = 4;
 var Viscosity = 4;
-var w = 79, h = 25, scale = 1;
+var w = 79 * accuracy, h = 25 * accuracy, scale = 1;
 var particle = (function () {
     function particle(posx, posy, wallflag) {
         this.posx = posx;
@@ -50,16 +52,18 @@ function init() {
     for (var i = 0; i < input.length; i++) {
         var c = input.charCodeAt(i);
         if (c === ord('\n')) {
-            y += 2;
+            y += accuracy;
             x = 0;
         }
         else if (c !== ord(' ')) {
-            a.push(new particle(x, y, c === ord('#')));
-            a.push(new particle(x, y + 1, c === ord('#')));
-            x++;
+            var wall = c === ord('#');
+            for (var dx = 0; dx < accuracy; dx++)
+                for (var dy = 0; dy < accuracy; dy++)
+                    a.push(new particle(x + dx, y + dy, wall));
+            x += accuracy;
         }
         else {
-            x++;
+            x += accuracy;
         }
     }
 }
@@ -110,13 +114,13 @@ function draw() {
     ctx.clearRect(0, 0, w * scale, h * scale);
     for (var _i = 0; _i < a.length; _i++) {
         var p = a[_i];
-        var x = p.posx, y = p.posy / 2;
+        var x = p.posx, y = p.posy;
         if (!p.wallflag) {
             p.posy += p.vely += p.forcey / 10;
             p.posx += p.velx += p.forcex / 10;
         }
         if (0 <= x && x < w && 0 <= y && y < h) {
-            ctx.fillRect(x * scale, y * scale, scale, scale / 2);
+            ctx.fillRect(x * scale, y * scale, scale, scale);
         }
     }
 }
