@@ -44,8 +44,10 @@ function loadfile() {
 	var req = new XMLHttpRequest();
 	req.open('GET', file.value, true);
 	req.onload = function() {
-		if (this.status >= 200 && this.status < 400)
+		if (this.status >= 200 && this.status < 400) {
 			previewarea.textContent = input = this.response;
+			run();
+		}
 		else console.error(this);
 	}
 	req.send();
