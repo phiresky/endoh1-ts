@@ -21,7 +21,7 @@
 </style>
 <div class="container">
    <div>
-      <select id="file" onchange="loadfile()"></select>
+      <select id="file" onchange="loadfile(this.value)"></select>
       <button onclick="run()">Run</button>
       <button onclick="stop()">Stop</button>
       <span id="fps"></span>
@@ -43,3 +43,4 @@
    </div>
 </div>
 <script src="endoh1.js"></script>
+<script>loadfile(file.value);</script>

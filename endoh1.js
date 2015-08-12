@@ -34,9 +34,9 @@ function ord(c) {
 function chr(c) {
     return String.fromCharCode(c);
 }
-function loadfile() {
+function loadfile(fname) {
     var req = new XMLHttpRequest();
-    req.open('GET', file.value, true);
+    req.open('GET', fname, true);
     req.onload = function () {
         if (this.status >= 200 && this.status < 400) {
             previewarea.value = this.response;
@@ -75,7 +75,8 @@ function int(d) {
 function calcfps() {
     if (frameid % 30 === 0) {
         var f = (frameid - lastframe) * 1000 / (Date.now() - lastdate);
-        fps.textContent = f.toFixed(1) + " fps";
+        if (typeof fps !== 'undefined')
+            fps.textContent = f.toFixed(1) + " fps";
         lastdate = Date.now();
         lastframe = frameid;
     }
@@ -143,4 +144,3 @@ function run() {
 function stop() {
     clearInterval(interval);
 }
-loadfile();

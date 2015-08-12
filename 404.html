@@ -1,0 +1,63 @@
+<!doctype html>
+<meta charset="utf-8">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+.outer {
+    display: table;
+    position: absolute;
+    height: 100%;
+    width: 100%;
+}
+
+.middle {
+    display: table-cell;
+    vertical-align: middle;
+}
+
+.inner {
+    display: block;
+    margin-left: auto;
+    margin-right: auto; 
+    width: 800px;
+    height: 600px;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    border: 1px solid gray;
+}
+
+textarea {
+   display:none;
+}
+</style>
+<div class=outer><div class=middle><canvas id="canvas" class=inner></canvas></div></div></div>
+   
+      <textarea id="previewarea" cols=80 rows=25>
+                                                                 
+                 #########       #########            #########  
+                #::::::::#     ##:::::::::##         #::::::::#  
+               #:::::::::#   ##:::::::::::::##      #:::::::::#  
+              #::::##::::#  #:::::::###:::::::#    #::::##::::#  
+             #::::# #::::#  #::::::#   #::::::#   #::::# #::::#  
+            #::::#  #::::#  #:::::#     #:::::#  #::::#  #::::#  
+           #::::#   #::::#  #:::::#     #:::::# #::::#   #::::#  
+          #::::######::::####:::::# ### #:::::##::::######::::###
+          #::::::::::::::::##:::::# ### #:::::##::::::::::::::::#
+          #  #######:::::####:::::#     #:::::###########:::::###
+                    #::::#  #:::::#     #:::::#          #::::#  
+                    #::::#  #::::::#   #::::::#          #::::#  
+                    #::::#  #:::::::###:::::::#          #::::#  
+                  ##::::::## ##:::::::::::::##         ##::::::##
+                  #::::::::#   ##:::::::::             #::::::::#
+                  ####   ###     #########             ##  ######
+                                         
+                    
+          #########     
+               ###################
+                            ################
+                                         #####################
+</textarea>
+   </div>
+</div>
+<script src="endoh1.js"></script>
+<script>run();</script>
