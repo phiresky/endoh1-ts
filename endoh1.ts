@@ -38,14 +38,12 @@ function chr(c: int) {
 	return String.fromCharCode(c);
 }
 
-var input = "";
-
 function loadfile() {
 	var req = new XMLHttpRequest();
 	req.open('GET', file.value, true);
 	req.onload = function() {
 		if (this.status >= 200 && this.status < 400) {
-			previewarea.textContent = input = this.response;
+			previewarea.value = this.response;
 			run();
 		}
 		else console.error(this);
@@ -55,6 +53,7 @@ function loadfile() {
 
 function init() {
 	a = [];
+	let input = previewarea.value;
 	var y: double = 0, x: double = 0;
 	for (var i = 0; i < input.length; i++) {
 		let c = input.charCodeAt(i);
